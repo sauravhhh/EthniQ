@@ -16,7 +16,6 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
       padding: 20px;
@@ -193,13 +192,6 @@
       color: white;
     }
 
-    .footer {
-      margin-top: 30px;
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.8);
-      text-align: center;
-    }
-
     @media (max-width: 480px) {
       .container {
         padding: 25px;
@@ -212,10 +204,6 @@
       
       .result-value {
         font-size: 1.3rem;
-      }
-
-      .footer {
-        margin-top: 20px;
       }
     }
   </style>
@@ -260,10 +248,6 @@
     </div>
   </div>
 
-  <div class="footer">
-    Made with ❤️ by sauravhhh
-  </div>
-
   <script>
     const nameInput = document.getElementById('nameInput');
     const searchBtn = document.getElementById('searchBtn');
@@ -276,30 +260,131 @@
     const countriesList = document.getElementById('countriesList');
     const newSearchBtn = document.getElementById('newSearchBtn');
 
-    // Country code to full name mapping based on ISO 3166
-    const countryNames = {
-      'AD': 'Andorra', 'AE': 'United Arab Emirates', 'AF': 'Afghanistan', 'AG': 'Antigua and Barbuda',
-      'AI': 'Anguilla', 'AL': 'Albania', 'AM': 'Armenia', 'AO': 'Angola', 'AR': 'Argentina',
-      'AS': 'American Samoa', 'AT': 'Austria', 'AU': 'Australia', 'AW': 'Aruba', 'AZ': 'Azerbaijan',
-      'BA': 'Bosnia and Herzegovina', 'BB': 'Barbados', 'BD': 'Bangladesh', 'BE': 'Belgium',
-      'BF': 'Burkina Faso', 'BG': 'Bulgaria', 'BH': 'Bahrain', 'BI': 'Burundi', 'BJ': 'Benin',
-      'BM': 'Bermuda', 'BN': 'Brunei', 'BO': 'Bolivia', 'BR': 'Brazil', 'BS': 'Bahamas',
-      'BT': 'Bhutan', 'BW': 'Botswana', 'BY': 'Belarus', 'BZ': 'Belize', 'CA': 'Canada',
-      'CD': 'Democratic Republic of the Congo', 'CF': 'Central African Republic', 'CG': 'Congo',
-      'CH': 'Switzerland', 'CI': 'Ivory Coast', 'CK': 'Cook Islands', 'CL': 'Chile',
-      'CM': 'Cameroon', 'CN': 'China', 'CO': 'Colombia', 'CR': 'Costa Rica', 'CU': 'Cuba',
-      'CV': 'Cape Verde', 'CY': 'Cyprus', 'CZ': 'Czech Republic', 'DE': 'Germany', 'DJ': 'Djibouti',
-      'DK': 'Denmark', 'DM': 'Dominica', 'DO': 'Dominican Republic', 'DZ': 'Algeria',
-      'EC': 'Ecuador', 'EE': 'Estonia', 'EG': 'Egypt', 'ER': 'Eritrea', 'ES': 'Spain',
-      'ET': 'Ethiopia', 'FI': 'Finland', 'FJ': 'Fiji', 'FM': 'Micronesia', 'FR': 'France',
-      'GA': 'Gabon', 'GB': 'United Kingdom', 'GD': 'Grenada', 'GE': 'Georgia', 'GH': 'Ghana',
-      'GM': 'Gambia', 'GN': 'Guinea', 'GQ': 'Equatorial Guinea', 'GR': 'Greece', 'GT': 'Guatemala',
-      'GU': 'Guam', 'GW': 'Guinea-Bissau', 'GY': 'Guyana', 'HK': 'Hong Kong', 'HN': 'Honduras',
-      'HR': 'Croatia', 'HT': 'Haiti', 'HU': 'Hungary', 'ID': 'Indonesia', 'IE': 'Ireland',
-      'IL': 'Israel', 'IN': 'India', 'IQ': 'Iraq', 'IR': 'Iran', 'IS': 'Iceland', 'IT': 'Italy',
-      'JM': 'Jamaica', 'JO': 'Jordan', 'JP': 'Japan', 'KE': 'Kenya', 'KG': 'Kyrgyzstan',
-      'KH': 'Cambodia', 'KI': 'Kiribati', 'KM': 'Comoros', 'KN': 'Saint Kitts and Nevis',
-      'KP': 'North Korea', 'KR': 'South Korea', 'KW': 'Kuwait', 'KY': 'Cayman Islands',
-      'KZ': 'Kazakhstan', 'LA': 'Laos', 'LB': 'Lebanon', 'LC': 'Saint Lucia', 'LI': 'Liechtenstein',
-      'LK': 'Sri Lanka', 'LR': '
+    // Country code to flag emoji mapping
+    const countryFlags = {
+      'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷', 'DE': '🇩🇪', 'IT': '🇮🇹', 'ES': '🇪🇸',
+      'IN': '🇮🇳', 'CN': '🇨🇳', 'JP': '🇯🇵', 'KR': '🇰🇷', 'BR': '🇧🇷', 'MX': '🇲🇽',
+      'CA': '🇨🇦', 'AU': '🇦🇺', 'RU': '🇷🇺', 'NL': '🇳🇱', 'SE': '🇸🇪', 'NO': '🇳🇴',
+      'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱', 'TR': '🇹🇷', 'GR': '🇬🇷', 'PT': '🇵🇹'
+    };
+
+    async function predictName() {
+      const name = nameInput.value.trim();
+      
+      if (!name) {
+        showError('Please enter a name');
+        return;
+      }
+
+      if (!/^[a-zA-Z]+$/.test(name)) {
+        showError('Please enter a valid name (letters only)');
+        return;
+      }
+
+      hideAll();
+      showLoading();
+      searchBtn.disabled = true;
+
+      try {
+        // Fetch gender and nationality predictions simultaneously
+        const [genderResponse, nationalityResponse] = await Promise.all([
+          fetch(`https://api.genderize.io/?name=${encodeURIComponent(name)}`),
+          fetch(`https://api.nationalize.io/?name=${encodeURIComponent(name)}`)
+        ]);
+
+        if (!genderResponse.ok || !nationalityResponse.ok) {
+          throw new Error('API request failed');
+        }
+
+        const genderData = await genderResponse.json();
+        const nationalityData = await nationalityResponse.json();
+
+        hideLoading();
+        displayResults(genderData, nationalityData, name);
+
+      } catch (err) {
+        hideLoading();
+        showError('Unable to predict. Please check your internet connection and try again.');
+        console.error('Error:', err);
+      } finally {
+        searchBtn.disabled = false;
+      }
+    }
+
+    function displayResults(genderData, nationalityData, name) {
+      // Display gender prediction
+      if (genderData.gender) {
+        genderValue.textContent = genderData.gender === 'male' ? 'Male' : 'Female';
+        const confidence = Math.round(genderData.probability * 100);
+        genderConfidence.textContent = `${confidence}% confidence based on ${genderData.count.toLocaleString()} records`;
+      } else {
+        genderValue.textContent = 'Unknown';
+        genderConfidence.textContent = 'No data available for this name';
+      }
+
+      // Display nationality predictions
+      if (nationalityData.country && nationalityData.country.length > 0) {
+        const topCountry = nationalityData.country[0];
+        nationalityValue.textContent = `${countryFlags[topCountry.country_id] || '🏳️'} ${topCountry.country_id}`;
+        
+        // Show top countries
+        countriesList.innerHTML = '';
+        nationalityData.country.slice(0, 5).forEach(country => {
+          const tag = document.createElement('div');
+          tag.className = 'country-tag';
+          const probability = Math.round(country.probability * 100);
+          tag.textContent = `${countryFlags[country.country_id] || '🏳️'} ${country.country_id} ${probability}%`;
+          countriesList.appendChild(tag);
+        });
+      } else {
+        nationalityValue.textContent = 'Unknown';
+        countriesList.innerHTML = '<div class="confidence">No data available for this name</div>';
+      }
+
+      results.style.display = 'block';
+    }
+
+    function showError(message) {
+      error.textContent = message;
+      error.style.display = 'block';
+    }
+
+    function showLoading() {
+      loading.style.display = 'block';
+    }
+
+    function hideLoading() {
+      loading.style.display = 'none';
+    }
+
+    function hideAll() {
+      error.style.display = 'none';
+      results.style.display = 'none';
+      hideLoading();
+    }
+
+    function resetSearch() {
+      nameInput.value = '';
+      hideAll();
+      nameInput.focus();
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', predictName);
+    newSearchBtn.addEventListener('click', resetSearch);
     
+    nameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        predictName();
+      }
+    });
+
+    nameInput.addEventListener('input', () => {
+      hideAll();
+    });
+
+    // Focus on input when page loads
+    nameInput.focus();
+  </script>
+</body>
+</html>
