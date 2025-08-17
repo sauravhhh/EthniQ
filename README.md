@@ -81,7 +81,6 @@ This project is licensed under the MIT License.
 
 - [Genderize.io](https://genderize.io/) and [Nationalize.io](https://nationalize.io/) for free prediction APIs
 - Apple iOS design guidelines for UI inspiration
-- Community and web dev ecosystem
 
 ---
 
