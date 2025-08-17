@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Name Predictor - Gender & Nationality</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 100%;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #2d3748;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 30px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .name-input {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 15px;
+      outline: none;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+
+    .name-input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      padding: 15px 0;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .search-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: none;
+      margin: 20px 0;
+      color: #667eea;
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      display: none;
+      background: #fed7d7;
+      color: #c53030;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .results {
+      display: none;
+      margin-top: 25px;
+      text-align: left;
+    }
+
+    .result-card {
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 5px;
+    }
+
+    .confidence {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    .countries-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .country-tag {
+      background: #667eea;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .new-search-btn {
+      width: 100%;
+      background: transparent;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 15px;
+      padding: 12px 0;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .new-search-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 25px;
+        margin: 10px;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      .result-value {
+        font-size: 1.3rem;
+      }
+
+      .footer {
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Name Predictor</h1>
+    <p class="subtitle">Discover the predicted gender and nationality for any name</p>
+    
+    <div class="input-group">
+      <input type="text" id="nameInput" class="name-input" placeholder="Enter a first name (e.g. John, Maria)">
+      <button id="searchBtn" class="search-btn">Predict</button>
+    </div>
+    
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      Analyzing name...
+    </div>
+    
+    <div id="error" class="error"></div>
+    
+    <div id="results" class="results">
+      <div class="result-card">
+        <div class="result-title">
+          <span>👤</span>
+          Gender Prediction
+        </div>
+        <div class="result-value" id="genderValue">-</div>
+        <div class="confidence" id="genderConfidence">-</div>
+      </div>
+      
+      <div class="result-card">
+        <div class="result-title">
+          <span>🌍</span>
+          Nationality Prediction
+        </div>
+        <div class="result-value" id="nationalityValue">-</div>
+        <div class="countries-list" id="countriesList"></div>
+      </div>
+      
+      <button id="newSearchBtn" class="new-search-btn">Search Another Name</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Made with ❤️ by sauravhhh
+  </div>
+
+  <script>
+    const nameInput = document.getElementById('nameInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const results = document.getElementById('results');
+    const genderValue = document.getElementById('genderValue');
+    const genderConfidence = document.getElementById('genderConfidence');
+    const nationalityValue = document.getElementById('nationalityValue');
+    const countriesList = document.getElementById('countriesList');
+    const newSearchBtn = document.getElementById('newSearchBtn');
+
+    // Country code to full name mapping based on ISO 3166
+    const countryNames = {
+      'AD': 'Andorra', 'AE': 'United Arab Emirates', 'AF': 'Afghanistan', 'AG': 'Antigua and Barbuda',
+      'AI': 'Anguilla', 'AL': 'Albania', 'AM': 'Armenia', 'AO': 'Angola', 'AR': 'Argentina',
+      'AS': 'American Samoa', 'AT': 'Austria', 'AU': 'Australia', 'AW': 'Aruba', 'AZ': 'Azerbaijan',
+      'BA': 'Bosnia and Herzegovina', 'BB': 'Barbados', 'BD': 'Bangladesh', 'BE': 'Belgium',
+      'BF': 'Burkina Faso', 'BG': 'Bulgaria', 'BH': 'Bahrain', 'BI': 'Burundi', 'BJ': 'Benin',
+      'BM': 'Bermuda', 'BN': 'Brunei', 'BO': 'Bolivia', 'BR': 'Brazil', 'BS': 'Bahamas',
+      'BT': 'Bhutan', 'BW': 'Botswana', 'BY': 'Belarus', 'BZ': 'Belize', 'CA': 'Canada',
+      'CD': 'Democratic Republic of the Congo', 'CF': 'Central African Republic', 'CG': 'Congo',
+      'CH': 'Switzerland', 'CI': 'Ivory Coast', 'CK': 'Cook Islands', 'CL': 'Chile',
+      'CM': 'Cameroon', 'CN': 'China', 'CO': 'Colombia', 'CR': 'Costa Rica', 'CU': 'Cuba',
+      'CV': 'Cape Verde', 'CY': 'Cyprus', 'CZ': 'Czech Republic', 'DE': 'Germany', 'DJ': 'Djibouti',
+      'DK': 'Denmark', 'DM': 'Dominica', 'DO': 'Dominican Republic', 'DZ': 'Algeria',
+      'EC': 'Ecuador', 'EE': 'Estonia', 'EG': 'Egypt', 'ER': 'Eritrea', 'ES': 'Spain',
+      'ET': 'Ethiopia', 'FI': 'Finland', 'FJ': 'Fiji', 'FM': 'Micronesia', 'FR': 'France',
+      'GA': 'Gabon', 'GB': 'United Kingdom', 'GD': 'Grenada', 'GE': 'Georgia', 'GH': 'Ghana',
+      'GM': 'Gambia', 'GN': 'Guinea', 'GQ': 'Equatorial Guinea', 'GR': 'Greece', 'GT': 'Guatemala',
+      'GU': 'Guam', 'GW': 'Guinea-Bissau', 'GY': 'Guyana', 'HK': 'Hong Kong', 'HN': 'Honduras',
+      'HR': 'Croatia', 'HT': 'Haiti', 'HU': 'Hungary', 'ID': 'Indonesia', 'IE': 'Ireland',
+      'IL': 'Israel', 'IN': 'India', 'IQ': 'Iraq', 'IR': 'Iran', 'IS': 'Iceland', 'IT': 'Italy',
+      'JM': 'Jamaica', 'JO': 'Jordan', 'JP': 'Japan', 'KE': 'Kenya', 'KG': 'Kyrgyzstan',
+      'KH': 'Cambodia', 'KI': 'Kiribati', 'KM': 'Comoros', 'KN': 'Saint Kitts and Nevis',
+      'KP': 'North Korea', 'KR': 'South Korea', 'KW': 'Kuwait', 'KY': 'Cayman Islands',
+      'KZ': 'Kazakhstan', 'LA': 'Laos', 'LB': 'Lebanon', 'LC': 'Saint Lucia', 'LI': 'Liechtenstein',
+      'LK': 'Sri Lanka', 'LR': '
+    
